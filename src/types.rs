@@ -9,16 +9,30 @@ pub struct Options {
 
     #[structopt(help = "Resource directory")]
     pub resources: String,
+
+    #[structopt(short = "d", long = "debug", help = "Activate debug mode (save interstage products)")]
+    pub debug: bool,
 }
 
 pub struct MIDIHandler {}
 
 #[derive(Debug, Deserialize)]
 pub struct OptionalRenderSettings {
-    pub input_file: Option<String>,
-    pub output_file: Option<String>,
-    pub debug_mode: Option<bool>,
+    pub input_file: String,
+    pub output_file: String,
     pub sample_rate: Option<u64>,
+
+    pub synth: HashMap<String, Synth>,
+    pub map: HashMap<String, Mapping>,
+}
+
+#[derive(Debug)]
+pub struct RenderSettings {
+    pub input_path: PathBuf,
+
+    pub input_file: String,
+    pub output_file: String,
+    pub sample_rate: u64,
 
     pub synth: HashMap<String, Synth>,
     pub map: HashMap<String, Mapping>,
@@ -64,23 +78,14 @@ pub struct SynthSetting {
     pub value_i: Option<u32>,
 }
 
-
-#[derive(Debug)]
-pub struct RenderSettings {
-    pub input_file: String,
-    pub input_path: PathBuf,
-    pub output_file: String,
-    pub debug_mode: bool,
-    pub sample_rate: u64,
-}
-
 pub fn to_render_settings(r: OptionalRenderSettings, p: PathBuf) -> RenderSettings {
     RenderSettings {
-        input_file: r.input_file.unwrap_or(String::from("input.midi")),
+        input_file: r.input_file,
         input_path: p,
-        output_file: r.output_file.unwrap_or(String::from("output.wav")),
-        debug_mode: r.debug_mode.unwrap_or(false),
+        output_file: r.output_file,
         sample_rate: r.sample_rate.unwrap_or(48_000),
+
+        synth: r.synth,
+        map: r.map,
     }
 }
-
