@@ -3,63 +3,24 @@ extern crate log;
 extern crate env_logger;
 extern crate fluidsynth_bindgen;
 extern crate structopt;
-extern crate toml;
 extern crate ghakuf;
-
 #[macro_use]
 extern crate structopt_derive;
 #[macro_use]
 extern crate serde_derive;
 
+mod types;
+mod tomlparser;
+
+use types::*;
+
 use std::ffi::CString;
 use std::os::raw::c_int;
-use std::fs::File;
-use std::io::prelude::*;
-use std::path::{Path, PathBuf};
 
 use structopt::StructOpt;
 use fluidsynth_bindgen::*;
 use ghakuf::messages::*;
 use ghakuf::reader::*;
-
-#[derive(Debug, Deserialize)]
-struct OptionalRenderSettings {
-    input_file: Option<String>,
-    output_file: Option<String>,
-    debug_mode: Option<bool>,
-    sample_rate: Option<u64>,
-}
-
-#[derive(Debug)]
-struct RenderSettings {
-    input_file: String,
-    input_path: PathBuf,
-    output_file: String,
-    debug_mode: bool,
-    sample_rate: u64,
-}
-
-fn to_render_settings(r: OptionalRenderSettings, p: PathBuf) -> RenderSettings {
-    RenderSettings {
-        input_file: r.input_file.unwrap_or(String::from("input.midi")),
-        input_path: p,
-        output_file: r.output_file.unwrap_or(String::from("output.wav")),
-        debug_mode: r.debug_mode.unwrap_or(false),
-        sample_rate: r.sample_rate.unwrap_or(48_000),
-    }
-}
-
-#[derive(StructOpt, Debug)]
-#[structopt(name = "musicrenderer_rust", about = "A simple program to render the music for OpenRCT2-OpenMusic")]
-struct Options {
-    #[structopt(help = "Input file")]
-    input: String,
-
-    #[structopt(help = "Resource directory")]
-    resources: String,
-}
-
-struct MIDIHandler {}
 
 impl Handler for MIDIHandler {
     fn header(&mut self, format: u16, track: u16, time_base: u16) {
@@ -84,18 +45,6 @@ impl Handler for MIDIHandler {
 }
 
 const MAX_POLYPHONY: c_int = 1_024;
-
-fn read_input_file(options: Options) -> RenderSettings {
-    let input_file = Path::new(&options.input);
-    let mut file = File::open(input_file.to_str().unwrap()).unwrap();
-    let mut contents = String::new();
-    if let Err(_) = file.read_to_string(&mut contents) {
-        panic!("Could not read input file!");
-    }
-
-    let render_settings: OptionalRenderSettings = toml::from_str(&contents).unwrap();
-    to_render_settings(render_settings, input_file.parent().unwrap().to_path_buf())
-}
 
 fn process_render_settings(render_settings: RenderSettings) {
     let mut midi_file = render_settings.input_path.clone();
@@ -126,7 +75,7 @@ fn main() {
     let opt = Options::from_args();
     info!("Options: {:?}", opt);
 
-    let render_settings = read_input_file(opt);
+    let render_settings = tomlparser::read_input_file(opt);
     info!("Render settings: {:?}", render_settings);
 
     process_render_settings(render_settings);
