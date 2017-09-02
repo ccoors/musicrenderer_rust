@@ -15,5 +15,6 @@ pub fn read_input_file(options: Options) -> RenderSettings {
     }
 
     let render_settings: OptionalRenderSettings = toml::from_str(&contents).unwrap();
+    info!("Optional Render settings: {:?}", render_settings);
     to_render_settings(render_settings, input_file.parent().unwrap().to_path_buf())
 }
