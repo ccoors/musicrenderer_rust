@@ -23,7 +23,6 @@ pub struct OptionalRenderSettings {
     pub sample_rate: Option<u64>,
 
     pub synth: HashMap<String, Synth>,
-    pub map: HashMap<String, Mapping>,
 }
 
 #[derive(Debug)]
@@ -35,12 +34,10 @@ pub struct RenderSettings {
     pub sample_rate: u64,
 
     pub synth: HashMap<String, Synth>,
-    pub map: HashMap<String, Mapping>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Mapping {
-    pub gain: f32,
     pub condition: Vec<Condition>,
     pub destination: Vec<Destination>,
 }
@@ -53,16 +50,17 @@ pub struct Condition {
 
 #[derive(Debug, Deserialize)]
 pub struct Destination {
-    pub synth: i32,
     pub patch: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Synth {
     pub synthtype: String,
+    pub gain: Option<f32>,
     pub directory: Option<String>,
     pub soundfont: Option<Vec<SynthSoundfont>>,
     pub setting: Option<Vec<SynthSetting>>,
+    pub mapping: HashMap<String, Mapping>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -86,6 +84,5 @@ pub fn to_render_settings(r: OptionalRenderSettings, p: PathBuf) -> RenderSettin
         sample_rate: r.sample_rate.unwrap_or(48_000),
 
         synth: r.synth,
-        map: r.map,
     }
 }
