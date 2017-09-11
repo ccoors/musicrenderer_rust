@@ -6,7 +6,7 @@ use std::path::Path;
 
 use types::*;
 
-pub fn read_input_file(options: Options) -> TOMLRenderSettings {
+pub fn read_input_file(options: &Options) -> TOMLRenderSettings {
     let input_file = Path::new(&options.input);
     let mut file = File::open(input_file.to_str().unwrap()).unwrap();
     let mut contents = String::new();

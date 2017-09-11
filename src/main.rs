@@ -9,22 +9,17 @@ extern crate structopt_derive;
 #[macro_use]
 extern crate serde_derive;
 
+use std::collections::HashMap;
+
+use structopt::StructOpt;
+use ghakuf::messages::*;
+use ghakuf::reader::*;
+
 mod types;
 mod tomlparser;
 mod fluidsynthesizer;
 
 use types::*;
-
-use std::ffi::CString;
-use std::os::raw::c_int;
-use std::collections::HashMap;
-
-use structopt::StructOpt;
-use fluidsynth_bindgen::*;
-use ghakuf::messages::*;
-use ghakuf::reader::*;
-
-//const MAX_POLYPHONY: c_int = 1_024;
 
 impl Handler for MIDIHandler {
     fn header(&mut self, format: u16, track: u16, time_base: u16) {
@@ -52,7 +47,7 @@ impl Handler for MIDIHandler {
     //         }
 }
 
-fn generate_fluid_synthesizers(settings: &HashMap<String, TOMLSynth>) -> Vec<FluidSynthesizer> {
+fn generate_fluid_synthesizers(settings: &HashMap<String, TOMLSynth>, options: &Options) -> Vec<FluidSynthesizer> {
     let mut res = vec!();
     for (id, settings) in settings {
         info!("Building fluid synthesizer '{}'", id);
@@ -78,14 +73,24 @@ fn generate_fluid_synthesizers(settings: &HashMap<String, TOMLSynth>) -> Vec<Flu
                 }
             }
         }
+
         synth.build();
+
+        if settings.soundfont.is_some() {
+            for soundfont in settings.soundfont.as_ref().unwrap() {
+                info!("Loading soundfont '{}' with offset {}", soundfont.file, soundfont.offset);
+                let soundfont_file = format!("{}{}", options.resources, soundfont.file);
+                synth.load_soundfont(&soundfont_file, soundfont.offset);
+            }
+        }
+
         res.push(synth);
     }
     res
 }
 
 
-fn process_render_settings(render_settings: TOMLRenderSettings) {
+fn process_render_settings(render_settings: TOMLRenderSettings, options: &Options) {
     let mut midi_file = render_settings.input_path.clone();
     midi_file.push(&render_settings.input_file);
     let mut reader = Reader::new(
@@ -93,7 +98,7 @@ fn process_render_settings(render_settings: TOMLRenderSettings) {
         &midi_file.to_str().unwrap(),
     ).unwrap();
 
-    let fluid_synthesizers = generate_fluid_synthesizers(&render_settings.synth);
+    let fluid_synthesizers = generate_fluid_synthesizers(&render_settings.synth, options);
 
     let _ = reader.read();
 }
@@ -104,8 +109,8 @@ fn main() {
     let opt = Options::from_args();
     info!("Options: {:?}", opt);
 
-    let render_settings = tomlparser::read_input_file(opt);
+    let render_settings = tomlparser::read_input_file(&opt);
     info!("Render settings: {:?}", render_settings);
 
-    process_render_settings(render_settings);
+    process_render_settings(render_settings, &opt);
 }

@@ -68,7 +68,7 @@ pub struct TOMLSynth {
 #[derive(Debug, Deserialize)]
 pub struct TOMLSynthSoundfont {
     pub file: String,
-    pub offset: u32,
+    pub offset: i32,
 }
 
 #[derive(Debug, Deserialize)]

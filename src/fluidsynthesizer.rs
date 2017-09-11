@@ -48,12 +48,25 @@ impl FluidSynthesizer {
     pub fn build(&mut self) {
         unsafe { self.synth = Some(new_fluid_synth(self.settings)); }
     }
+
+    pub fn load_soundfont(&self, file: &str, offset: i32) {
+        assert!(self.synth.is_some());
+        let file: CString = CString::new(file).unwrap();
+        info!("Loading SoundFont...");
+        let result = unsafe { fluid_synth_sfload(self.synth.unwrap(), file.as_ptr(), 0) };
+        assert_ne!(result, FLUID_FAILED);
+        info!("SoundFont loaded with ID {}", result);
+        info!("Setting bank offset");
+        unsafe { fluid_synth_set_bank_offset(self.synth.unwrap(), result, offset); }
+    }
 }
 
 impl Drop for FluidSynthesizer {
     fn drop(&mut self) {
         unsafe {
+            info!("Dropping FluidSynthesizer");
             if let Some(synth) = self.synth {
+                info!("delete_fluid_synth()");
                 delete_fluid_synth(synth);
             }
 
