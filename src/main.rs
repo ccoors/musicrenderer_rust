@@ -56,19 +56,19 @@ fn generate_fluid_synthesizers(settings: &HashMap<String, TOMLSynth>, options: &
             for setting in settings.setting.as_ref().unwrap() {
                 if setting.value_i.is_some() {
                     let set = *setting.value_i.as_ref().unwrap();
-                    info!("Setting '{}' to {}", setting.name, set);
+                    debug!("Setting '{}' to {}", setting.name, set);
                     synth.settings_setint(&setting.name, set);
                 }
 
                 if setting.value_f.is_some() {
                     let set = *setting.value_f.as_ref().unwrap();
-                    info!("Setting '{}' to {}", setting.name, set);
+                    debug!("Setting '{}' to {}", setting.name, set);
                     synth.settings_setfloat(&setting.name, set);
                 }
 
                 if setting.value_s.is_some() {
                     let set = setting.value_s.as_ref().unwrap().clone();
-                    info!("Setting '{}' to '{}'", setting.name, set);
+                    debug!("Setting '{}' to '{}'", setting.name, set);
                     synth.settings_setstring(&setting.name, set);
                 }
             }
@@ -107,10 +107,10 @@ fn main() {
     env_logger::init().unwrap();
 
     let opt = Options::from_args();
-    info!("Options: {:?}", opt);
+    debug!("Options: {:?}", opt);
 
     let render_settings = tomlparser::read_input_file(&opt);
-    info!("Render settings: {:?}", render_settings);
+    debug!("Render settings: {:?}", render_settings);
 
     process_render_settings(render_settings, &opt);
 }

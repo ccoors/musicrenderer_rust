@@ -56,7 +56,7 @@ impl FluidSynthesizer {
         let result = unsafe { fluid_synth_sfload(self.synth.unwrap(), file.as_ptr(), 0) };
         assert_ne!(result, FLUID_FAILED);
         info!("SoundFont loaded with ID {}", result);
-        info!("Setting bank offset");
+        debug!("Setting bank offset");
         unsafe { fluid_synth_set_bank_offset(self.synth.unwrap(), result, offset); }
     }
 }
@@ -64,9 +64,9 @@ impl FluidSynthesizer {
 impl Drop for FluidSynthesizer {
     fn drop(&mut self) {
         unsafe {
-            info!("Dropping FluidSynthesizer");
+            debug!("Dropping FluidSynthesizer");
             if let Some(synth) = self.synth {
-                info!("delete_fluid_synth()");
+                debug!("delete_fluid_synth()");
                 delete_fluid_synth(synth);
             }
 
