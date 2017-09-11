@@ -17,11 +17,14 @@ use types::*;
 
 use std::ffi::CString;
 use std::os::raw::c_int;
+use std::collections::HashMap;
 
 use structopt::StructOpt;
 use fluidsynth_bindgen::*;
 use ghakuf::messages::*;
 use ghakuf::reader::*;
+
+//const MAX_POLYPHONY: c_int = 1_024;
 
 impl Handler for MIDIHandler {
     fn header(&mut self, format: u16, track: u16, time_base: u16) {
@@ -49,7 +52,38 @@ impl Handler for MIDIHandler {
     //         }
 }
 
-const MAX_POLYPHONY: c_int = 1_024;
+fn generate_fluid_synthesizers(settings: &HashMap<String, TOMLSynth>) -> Vec<FluidSynthesizer> {
+    let mut res = vec!();
+    for (id, settings) in settings {
+        info!("Building fluid synthesizer '{}'", id);
+        let mut synth = FluidSynthesizer::new();
+        if settings.setting.is_some() {
+            for setting in settings.setting.as_ref().unwrap() {
+                if setting.value_i.is_some() {
+                    let set = *setting.value_i.as_ref().unwrap();
+                    info!("Setting '{}' to {}", setting.name, set);
+                    synth.settings_setint(&setting.name, set);
+                }
+
+                if setting.value_f.is_some() {
+                    let set = *setting.value_f.as_ref().unwrap();
+                    info!("Setting '{}' to {}", setting.name, set);
+                    synth.settings_setfloat(&setting.name, set);
+                }
+
+                if setting.value_s.is_some() {
+                    let set = setting.value_s.as_ref().unwrap().clone();
+                    info!("Setting '{}' to '{}'", setting.name, set);
+                    synth.settings_setstring(&setting.name, set);
+                }
+            }
+        }
+        synth.build();
+        res.push(synth);
+    }
+    res
+}
+
 
 fn process_render_settings(render_settings: TOMLRenderSettings) {
     let mut midi_file = render_settings.input_path.clone();
@@ -59,19 +93,9 @@ fn process_render_settings(render_settings: TOMLRenderSettings) {
         &midi_file.to_str().unwrap(),
     ).unwrap();
 
+    let fluid_synthesizers = generate_fluid_synthesizers(&render_settings.synth);
+
     let _ = reader.read();
-
-    unsafe {
-        let synth_polyphony_string: CString = CString::new("synth.polyphony").unwrap();
-
-        let settings = new_fluid_settings();
-        fluid_settings_setint(settings, synth_polyphony_string.as_ptr(), MAX_POLYPHONY);
-        let mut set_poly: i32 = 0;
-        fluid_settings_getint(settings, synth_polyphony_string.as_ptr(), &mut set_poly as *mut i32);
-        assert_eq!(set_poly, MAX_POLYPHONY);
-        info!("Same ({} = {})", set_poly, MAX_POLYPHONY);
-        delete_fluid_settings(settings);
-    }
 }
 
 fn main() {

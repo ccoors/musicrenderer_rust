@@ -74,8 +74,9 @@ pub struct TOMLSynthSoundfont {
 #[derive(Debug, Deserialize)]
 pub struct TOMLSynthSetting {
     pub name: String,
-    pub value_f: Option<f32>,
-    pub value_i: Option<u32>,
+    pub value_f: Option<f64>,
+    pub value_i: Option<i32>,
+    pub value_s: Option<String>,
 }
 
 #[derive(Debug)]
