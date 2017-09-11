@@ -78,8 +78,12 @@ fn generate_fluid_synthesizers(settings: &HashMap<String, TOMLSynth>, options: &
 
         if settings.soundfont.is_some() {
             for soundfont in settings.soundfont.as_ref().unwrap() {
-                info!("Loading soundfont '{}' with offset {}", soundfont.file, soundfont.offset);
-                let soundfont_file = format!("{}{}", options.resources, soundfont.file);
+                let mut separator = "/";
+                if options.resources.ends_with("/") {
+                    separator = "";
+                }
+                let soundfont_file = format!("{}{}{}", options.resources, separator, soundfont.file);
+                info!("Loading soundfont '{}' with offset {}", soundfont_file, soundfont.offset);
                 synth.load_soundfont(&soundfont_file, soundfont.offset);
             }
         }
