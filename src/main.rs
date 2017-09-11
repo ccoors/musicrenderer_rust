@@ -11,6 +11,7 @@ extern crate serde_derive;
 
 mod types;
 mod tomlparser;
+mod fluidsynthesizer;
 
 use types::*;
 
@@ -26,16 +27,20 @@ impl Handler for MIDIHandler {
     fn header(&mut self, format: u16, track: u16, time_base: u16) {
         let _ = (format, track, time_base);
     }
+
     fn meta_event(&mut self, delta_time: u32, event: &MetaEvent, data: &Vec<u8>) {
         let _ = (delta_time, event, data);
     }
+
     fn midi_event(&mut self, delta_time: u32, event: &MidiEvent) {
         let _ = (delta_time, event);
         //             self.status = HandlerStatus::SkipTrack;
     }
+
     fn sys_ex_event(&mut self, delta_time: u32, event: &SysExEvent, data: &Vec<u8>) {
         let _ = (delta_time, event, data);
     }
+
     fn track_change(&mut self) {
         //             self.status = HandlerStatus::Continue;
     }
@@ -46,7 +51,7 @@ impl Handler for MIDIHandler {
 
 const MAX_POLYPHONY: c_int = 1_024;
 
-fn process_render_settings(render_settings: RenderSettings) {
+fn process_render_settings(render_settings: TOMLRenderSettings) {
     let mut midi_file = render_settings.input_path.clone();
     midi_file.push(&render_settings.input_file);
     let mut reader = Reader::new(
