@@ -4,9 +4,9 @@ version = "0.1.0"
 authors = ["Christian F. Coors <ccoors@uni-bremen.de>"]
 
 [dependencies]
-libc = "0.2.29"
+libc = "0.2.30"
 log = "0.3.8"
-env_logger = "0.3"
+env_logger = "0.4"
 structopt = "0.1.0"
 structopt-derive = "0.1.0"
 toml = "0.4"
