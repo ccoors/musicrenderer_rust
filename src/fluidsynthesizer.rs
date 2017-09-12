@@ -1,11 +1,12 @@
 use std::ffi::CString;
+use std::collections::HashMap;
 
 use std::os::raw::c_int;
 use std::os::raw::c_double;
 
 use fluidsynth_bindgen::*;
 
-use types::FluidSynthesizer;
+use types::*;
 
 impl FluidSynthesizer {
     pub fn new() -> FluidSynthesizer {
@@ -78,4 +79,63 @@ impl Drop for FluidSynthesizer {
             delete_fluid_settings(self.settings);
         }
     }
+}
+
+fn assert_one_value(setting: &TOMLSynthSetting) {
+    let mut i = 0;
+    if setting.value_i.is_some() { i += 1 };
+    if setting.value_f.is_some() { i += 1 };
+    if setting.value_s.is_some() { i += 1 };
+    assert!(i == 1, "Expecting exactly one value");
+}
+
+pub fn generate_fluid_synthesizers(settings: &HashMap<String, TOMLSynth>, options: &Options) -> Vec<FluidSynthesizer> {
+    let mut res = vec!();
+    for (id, settings) in settings {
+        if settings.synthtype != "fluidsynth" {
+            continue;
+        }
+        info!("Building fluid synthesizer '{}'", id);
+        let mut synth = FluidSynthesizer::new();
+        synth.set_gain(settings.gain);
+        if settings.setting.is_some() {
+            for setting in settings.setting.as_ref().unwrap() {
+                assert_one_value(setting);
+                if setting.value_i.is_some() {
+                    let set = *setting.value_i.as_ref().unwrap();
+                    debug!("Setting '{}' to {}", setting.name, set);
+                    synth.settings_setint(&setting.name, set);
+                }
+
+                if setting.value_f.is_some() {
+                    let set = *setting.value_f.as_ref().unwrap();
+                    debug!("Setting '{}' to {}", setting.name, set);
+                    synth.settings_setfloat(&setting.name, set);
+                }
+
+                if setting.value_s.is_some() {
+                    let set = setting.value_s.as_ref().unwrap().clone();
+                    debug!("Setting '{}' to '{}'", setting.name, set);
+                    synth.settings_setstring(&setting.name, set);
+                }
+            }
+        }
+
+        synth.build();
+
+        if settings.soundfont.is_some() {
+            for soundfont in settings.soundfont.as_ref().unwrap() {
+                let mut separator = "/";
+                if options.resources.ends_with("/") {
+                    separator = ""; // Ugh. TODO: fix this
+                }
+                let soundfont_file = format!("{}{}{}", options.resources, separator, soundfont.file);
+                info!("Loading soundfont '{}' with offset {}", soundfont_file, soundfont.offset);
+                synth.load_soundfont(&soundfont_file, soundfont.offset);
+            }
+        }
+
+        res.push(synth);
+    }
+    res
 }
