@@ -47,18 +47,19 @@ pub struct TOMLMapping {
 #[derive(Debug, Deserialize)]
 pub struct TOMLCondition {
     pub program: Option<String>,
-    pub channel: Option<String>,
+    pub track: Option<u32>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct TOMLDestination {
-    pub patch: Option<String>,
+    pub bank: Option<u32>,
+    pub program: Option<u32>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct TOMLSynth {
     pub synthtype: String,
-    pub gain: Option<f32>,
+    pub gain: f32,
     pub directory: Option<String>,
     pub soundfont: Option<Vec<TOMLSynthSoundfont>>,
     pub setting: Option<Vec<TOMLSynthSetting>>,
@@ -83,6 +84,7 @@ pub struct TOMLSynthSetting {
 pub struct FluidSynthesizer {
     pub settings: *mut fluid_settings_t,
     pub synth: Option<*mut fluid_synth_t>,
+    pub gain: f32,
 }
 
 pub fn to_render_settings(r: TOMLOptionalRenderSettings, p: PathBuf) -> TOMLRenderSettings {

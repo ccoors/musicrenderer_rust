@@ -13,6 +13,7 @@ impl FluidSynthesizer {
             FluidSynthesizer {
                 settings: new_fluid_settings(),
                 synth: None,
+                gain: 1.0,
             }
         }
     }
@@ -43,6 +44,10 @@ impl FluidSynthesizer {
         unsafe { assert_eq!(fluid_settings_setstr(self.settings, name.as_ptr(), value.as_ptr()), 1); }
 
         // Verify TODO
+    }
+
+    pub fn set_gain(&mut self, gain: f32) {
+        self.gain = gain;
     }
 
     pub fn build(&mut self) {

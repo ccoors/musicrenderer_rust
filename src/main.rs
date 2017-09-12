@@ -47,13 +47,26 @@ impl Handler for MIDIHandler {
     //         }
 }
 
+fn assert_one_value(setting: &TOMLSynthSetting) {
+    let mut i = 0;
+    if setting.value_i.is_some() { i += 1 };
+    if setting.value_f.is_some() { i += 1 };
+    if setting.value_s.is_some() { i += 1 };
+    assert!(i == 1, "Expecting exactly one value");
+}
+
 fn generate_fluid_synthesizers(settings: &HashMap<String, TOMLSynth>, options: &Options) -> Vec<FluidSynthesizer> {
     let mut res = vec!();
     for (id, settings) in settings {
+        if settings.synthtype != "fluidsynth" {
+            continue;
+        }
         info!("Building fluid synthesizer '{}'", id);
         let mut synth = FluidSynthesizer::new();
+        synth.set_gain(settings.gain);
         if settings.setting.is_some() {
             for setting in settings.setting.as_ref().unwrap() {
+                assert_one_value(setting);
                 if setting.value_i.is_some() {
                     let set = *setting.value_i.as_ref().unwrap();
                     debug!("Setting '{}' to {}", setting.name, set);
@@ -80,7 +93,7 @@ fn generate_fluid_synthesizers(settings: &HashMap<String, TOMLSynth>, options: &
             for soundfont in settings.soundfont.as_ref().unwrap() {
                 let mut separator = "/";
                 if options.resources.ends_with("/") {
-                    separator = "";
+                    separator = ""; // Ugh. TODO: fix this
                 }
                 let soundfont_file = format!("{}{}{}", options.resources, separator, soundfont.file);
                 info!("Loading soundfont '{}' with offset {}", soundfont_file, soundfont.offset);
@@ -102,7 +115,10 @@ fn process_render_settings(render_settings: TOMLRenderSettings, options: &Option
         &midi_file.to_str().unwrap(),
     ).unwrap();
 
+    info!("Generating FluidSynth synthesizers...");
     let fluid_synthesizers = generate_fluid_synthesizers(&render_settings.synth, options);
+    let elements = fluid_synthesizers.len();
+    info!("Generated {} FluidSynth synthesizer{}", elements, if elements == 1 { "" } else { "s" });
 
     let _ = reader.read();
 }
