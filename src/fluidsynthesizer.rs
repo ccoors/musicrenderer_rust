@@ -13,8 +13,11 @@ impl FluidSynthesizer {
         unsafe {
             FluidSynthesizer {
                 settings: new_fluid_settings(),
-                synth: None,
+                synthesizer: None,
+                sequencer: None,
+                synthesizer_seq_id: 0,
                 gain: 1.0,
+                last_event: 0,
             }
         }
     }
@@ -52,18 +55,28 @@ impl FluidSynthesizer {
     }
 
     pub fn build(&mut self) {
-        unsafe { self.synth = Some(new_fluid_synth(self.settings)); }
+        unsafe {
+            self.synthesizer = Some(new_fluid_synth(self.settings));
+            self.sequencer = Some(new_fluid_sequencer2(0));
+            self.synthesizer_seq_id = fluid_sequencer_register_fluidsynth(self.sequencer.unwrap(), self.synthesizer.unwrap());
+            debug!("Sequencer seq ID {}", self.synthesizer_seq_id);
+            assert_eq!(fluid_sequencer_get_use_system_timer(self.sequencer.unwrap()), 0);
+
+            // Unfortunately, sequencer precision is limited to 1ms/tick by FluidSynth
+            fluid_sequencer_set_time_scale(self.sequencer.unwrap(), 1000.0);
+            assert_eq!(fluid_sequencer_get_time_scale(self.sequencer.unwrap()), 1000.0);
+        }
     }
 
     pub fn load_soundfont(&self, file: &str, offset: i32) {
-        assert!(self.synth.is_some());
+        assert!(self.synthesizer.is_some());
         let file: CString = CString::new(file).unwrap();
         info!("Loading SoundFont...");
-        let result = unsafe { fluid_synth_sfload(self.synth.unwrap(), file.as_ptr(), 0) };
+        let result = unsafe { fluid_synth_sfload(self.synthesizer.unwrap(), file.as_ptr(), 0) };
         assert_ne!(result, FLUID_FAILED, "Could not load SoundFont");
         info!("SoundFont loaded. Got ID {}", result);
         debug!("Setting bank offset");
-        unsafe { fluid_synth_set_bank_offset(self.synth.unwrap(), result, offset); }
+        unsafe { fluid_synth_set_bank_offset(self.synthesizer.unwrap(), result, offset); }
     }
 }
 
@@ -71,11 +84,18 @@ impl Drop for FluidSynthesizer {
     fn drop(&mut self) {
         unsafe {
             debug!("Dropping FluidSynthesizer");
-            if let Some(synth) = self.synth {
-                debug!("delete_fluid_synth()");
-                delete_fluid_synth(synth);
+
+            if let Some(sequencer) = self.sequencer {
+                debug!(" Dropping sequencer");
+                delete_fluid_sequencer(sequencer);
             }
 
+            if let Some(synthesizer) = self.synthesizer {
+                debug!(" Dropping synthesizer");
+                delete_fluid_synth(synthesizer);
+            }
+
+            debug!(" Dropping settings");
             delete_fluid_settings(self.settings);
         }
     }

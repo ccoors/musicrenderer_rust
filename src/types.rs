@@ -83,8 +83,11 @@ pub struct TOMLSynthSetting {
 #[derive(Debug)]
 pub struct FluidSynthesizer {
     pub settings: *mut fluid_settings_t,
-    pub synth: Option<*mut fluid_synth_t>,
+    pub synthesizer: Option<*mut fluid_synth_t>,
+    pub sequencer: Option<*mut fluid_sequencer_t>,
+    pub synthesizer_seq_id: i16,
     pub gain: f32,
+    pub last_event: i32,
 }
 
 pub fn to_render_settings(r: TOMLOptionalRenderSettings, p: PathBuf) -> TOMLRenderSettings {
