@@ -110,7 +110,7 @@ fn assert_one_value(setting: &TOMLSynthSetting) {
 }
 
 pub fn generate_fluid_synthesizers(settings: &TOMLRenderSettings, resources: &PathBuf) -> Vec<FluidSynthesizer> {
-    let mut res = vec!();
+    let mut res = Vec::new();
     for (id, synthsettings) in &settings.synth {
         if synthsettings.synthtype != "fluidsynth" {
             continue;

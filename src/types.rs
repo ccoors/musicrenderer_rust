@@ -16,7 +16,9 @@ pub struct Options {
     pub debug: bool,
 }
 
-pub struct MIDIHandler {}
+pub struct MIDIHandler  {
+    pub fluid_synthesizers: Vec<FluidSynthesizer>,
+}
 
 #[derive(Debug, Deserialize)]
 pub struct TOMLOptionalRenderSettings {

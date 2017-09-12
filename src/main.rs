@@ -22,15 +22,18 @@ mod midiparser;
 fn process_render_settings(render_settings: &types::TOMLRenderSettings, resources: &PathBuf) {
     let mut midi_file = render_settings.input_path.clone();
     midi_file.push(&render_settings.input_file);
-    let mut reader = Reader::new(
-        Box::new(types::MIDIHandler {}),
-        &midi_file.to_str().unwrap(),
-    ).unwrap();
+    let mut handler = Box::new(types::MIDIHandler { fluid_synthesizers: Vec::new() });
 
     info!("Generating FluidSynth synthesizers...");
     let fluid_synthesizers = fluidsynthesizer::generate_fluid_synthesizers(&render_settings, resources);
     let elements = fluid_synthesizers.len();
     info!("Generated {} FluidSynth synthesizer{}", elements, if elements == 1 { "" } else { "s" });
+
+    handler.fluid_synthesizers = fluid_synthesizers;
+    let mut reader = Reader::new(
+        handler,
+        &midi_file.to_str().unwrap(),
+    ).unwrap();
 
     info!("Parsing MIDI file");
     let _ = reader.read();
