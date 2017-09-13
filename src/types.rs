@@ -16,8 +16,23 @@ pub struct Options {
     pub debug: bool,
 }
 
-pub struct MIDIHandler  {
+#[derive(Debug)]
+pub struct MIDITempoChange {
+    pub pulse: u64,
+    pub us_per_pulse: f64,
+}
+
+pub struct MIDIHandlerData {
     pub fluid_synthesizers: Vec<FluidSynthesizer>,
+    pub pulses_per_quarter_note: u16,
+    pub tempo_changes: Vec<MIDITempoChange>,
+    pub current_pulse: u64,
+    pub max_pulse: u64,
+}
+
+pub struct MIDIHandler {
+    // Yes. I know. This is not nice. But due to limitations in ghakuf I have to do this.
+    pub data: *mut MIDIHandlerData,
 }
 
 #[derive(Debug, Deserialize)]
