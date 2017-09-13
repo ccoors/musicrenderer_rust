@@ -98,6 +98,18 @@ pub struct TOMLSynthSetting {
 }
 
 #[derive(Debug)]
+pub struct FluidSynthesizerCondition {
+    pub channel: u8,
+    pub program: u8,
+}
+
+#[derive(Debug)]
+pub struct FluidSynthesizerMapping {
+    pub condition: FluidSynthesizerCondition,
+    pub destination: u8,
+}
+
+#[derive(Debug)]
 pub struct FluidSynthesizer {
     pub settings: *mut fluid_settings_t,
     pub synthesizer: Option<*mut fluid_synth_t>,
@@ -105,6 +117,8 @@ pub struct FluidSynthesizer {
     pub synthesizer_seq_id: i16,
     pub gain: f32,
     pub last_event: i32,
+    pub used_channels: u8,
+    pub mapping: Vec<FluidSynthesizerMapping>,
 }
 
 pub fn to_render_settings(r: TOMLOptionalRenderSettings, p: PathBuf) -> TOMLRenderSettings {

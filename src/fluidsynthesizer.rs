@@ -18,6 +18,8 @@ impl FluidSynthesizer {
                 synthesizer_seq_id: 0,
                 gain: 1.0,
                 last_event: 0,
+                used_channels: 0,
+                mapping: Vec::new(),
             }
         }
     }
@@ -106,7 +108,7 @@ fn assert_one_value(setting: &TOMLSynthSetting) {
     if setting.value_i.is_some() { i += 1 };
     if setting.value_f.is_some() { i += 1 };
     if setting.value_s.is_some() { i += 1 };
-    assert!(i == 1, "Expecting exactly one value");
+    assert_eq!(i, 1, "Expecting exactly one value");
 }
 
 pub fn generate_fluid_synthesizers(settings: &TOMLRenderSettings, resources: &PathBuf) -> Vec<FluidSynthesizer> {
