@@ -8,6 +8,7 @@ extern crate ghakuf;
 extern crate structopt_derive;
 #[macro_use]
 extern crate serde_derive;
+extern crate time;
 
 use std::path::PathBuf;
 
@@ -50,7 +51,7 @@ fn process_render_settings(render_settings: &types::TOMLRenderSettings, resource
         let _ = reader.read();
     }
 
-    info!("MIDI length: {}", handler_data.max_time());
+    info!("MIDI length: {}", time::Duration::microseconds(handler_data.max_time() as i64));
 }
 
 fn main() {

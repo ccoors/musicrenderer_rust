@@ -10,7 +10,7 @@ impl MIDIHandlerData {
         assert!(self.tempo_changes.len() > 0);
         let mut acc = 0.0;
         let mut last_change: u64 = 0;
-        let mut current_uspp: f64 = 0.0;
+        let mut current_uspp = 0.0;
         let mut last_added = false;
         for t in &self.tempo_changes {
             if pulse >= t.pulse {
@@ -62,7 +62,7 @@ impl Handler for MIDIHandler {
 
                 let us_per_qn = ((data[0] as u32) << 16) + ((data[1] as u32) << 8) + (data[2] as u32);
                 let bpm = 60000000.0 / us_per_qn as f64;
-                let uspp = unsafe { (us_per_qn as f64 / (*self.data).pulses_per_quarter_note as f64) * 0.000001 };
+                let uspp = unsafe { (us_per_qn as f64 / (*self.data).pulses_per_quarter_note as f64) };
 
                 debug!("New tempo: {} USPQN / {:.*} BPM / {} USPP", us_per_qn, 0, bpm, uspp);
                 unsafe {
@@ -70,7 +70,7 @@ impl Handler for MIDIHandler {
                         pulse: (*self.data).current_pulse,
                         us_per_pulse: uspp,
                     });
-                    trace!("Tempo changes: {:?}", (*self.data).tempo_changes);
+                    trace!("Current tempo changes: {:?}", (*self.data).tempo_changes);
                 }
             }
             _ => {}
@@ -80,7 +80,9 @@ impl Handler for MIDIHandler {
     fn midi_event(&mut self, delta_time: u32, event: &MidiEvent) {
         //        let debug_event = (delta_time, event);
         //        trace!("SMF midi event: {:?}", debug_event);
-        unsafe { (*self.data).add_delta_time(delta_time); }
+        unsafe {
+            (*self.data).add_delta_time(delta_time);
+        }
 
         // TODO: Schedule event in synth sequencer
     }
