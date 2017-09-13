@@ -77,7 +77,7 @@ impl Handler for MIDIHandler {
         }
     }
 
-    fn midi_event(&mut self, delta_time: u32, event: &MidiEvent) {
+    fn midi_event(&mut self, delta_time: u32, _event: &MidiEvent) {
         //        let debug_event = (delta_time, event);
         //        trace!("SMF midi event: {:?}", debug_event);
         unsafe {
