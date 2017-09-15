@@ -7,6 +7,7 @@ use std::os::raw::c_double;
 use fluidsynth_bindgen::*;
 
 use types::*;
+use gm_instruments;
 
 impl FluidSynthesizer {
     pub fn new() -> FluidSynthesizer {
@@ -56,6 +57,10 @@ impl FluidSynthesizer {
         self.gain = gain;
     }
 
+    pub fn set_mapping(&mut self, mapping: Vec<FluidSynthesizerMapping>) {
+        self.mapping = mapping;
+    }
+
     pub fn build(&mut self) {
         unsafe {
             self.synthesizer = Some(new_fluid_synth(self.settings));
@@ -85,30 +90,84 @@ impl FluidSynthesizer {
 impl Drop for FluidSynthesizer {
     fn drop(&mut self) {
         unsafe {
-            debug!("Dropping FluidSynthesizer");
+            trace!("Dropping FluidSynthesizer");
 
             if let Some(sequencer) = self.sequencer {
-                debug!(" Dropping sequencer");
+                trace!(" Dropping sequencer");
                 delete_fluid_sequencer(sequencer);
             }
 
             if let Some(synthesizer) = self.synthesizer {
-                debug!(" Dropping synthesizer");
+                trace!(" Dropping synthesizer");
                 delete_fluid_synth(synthesizer);
             }
 
-            debug!(" Dropping settings");
+            trace!(" Dropping settings");
             delete_fluid_settings(self.settings);
         }
     }
 }
 
-fn assert_one_value(setting: &TOMLSynthSetting) {
+fn assert_one_value_in_synth_setting(setting: &TOMLSynthSetting) {
     let mut i = 0;
     if setting.value_i.is_some() { i += 1 };
     if setting.value_f.is_some() { i += 1 };
     if setting.value_s.is_some() { i += 1 };
     assert_eq!(i, 1, "Expecting exactly one value");
+}
+
+fn assert_one_value_in_condition(condition: &TOMLCondition) {
+    let mut i = 0;
+    if condition.channel.is_some() { i += 1 };
+    if condition.program.is_some() { i += 1 };
+    assert_eq!(i, 1, "Expecting exactly one value");
+}
+
+fn generate_single_mapping(synthsettings: &TOMLSynth, synth: &mut FluidSynthesizer, condition: &TOMLCondition, destinations: &Vec<TOMLDestination>) -> FluidSynthesizerMapping {
+    assert_one_value_in_condition(condition);
+    let channel = condition.channel;
+    let program = if condition.program.is_some() {
+        Some(gm_instruments::program_nr_of(condition.program.as_ref().unwrap()))
+    } else {
+        None
+    };
+
+    let mut fluid_destinations = Vec::new();
+    for destination in destinations {
+        let destination_bank = if destination.bank.is_some() {
+            destination.bank.unwrap()
+        } else {
+            0
+        };
+        let destination_program = if destination.program.is_some() {
+            gm_instruments::program_nr_of(destination.program.as_ref().unwrap())
+        } else {
+            destination.program_nr.expect("Destination must contain program or program_nr") as u8
+        };
+        // Set on synth
+
+        fluid_destinations.push(synth.used_channels);
+        synth.used_channels += 1;
+    }
+
+    let res = FluidSynthesizerMapping {
+        condition: FluidSynthesizerCondition {
+            channel,
+            program,
+        },
+        destinations: fluid_destinations,
+    };
+    res
+}
+
+fn generate_mapping(synthsettings: &TOMLSynth, synth: &mut FluidSynthesizer) -> Vec<FluidSynthesizerMapping> {
+    let mut res = Vec::new();
+    for (_id, mapping) in &synthsettings.mapping {
+        for condition in &mapping.condition {
+            res.push(generate_single_mapping(synthsettings, synth, &condition, &mapping.destination));
+        }
+    }
+    res
 }
 
 pub fn generate_fluid_synthesizers(settings: &TOMLRenderSettings, resources: &PathBuf) -> Vec<FluidSynthesizer> {
@@ -122,7 +181,7 @@ pub fn generate_fluid_synthesizers(settings: &TOMLRenderSettings, resources: &Pa
         synth.set_gain(synthsettings.gain);
         if synthsettings.setting.is_some() {
             for setting in synthsettings.setting.as_ref().unwrap() {
-                assert_one_value(setting);
+                assert_one_value_in_synth_setting(setting);
                 if setting.value_i.is_some() {
                     let set = *setting.value_i.as_ref().unwrap();
                     debug!("Setting '{}' to {}", setting.name, set);
@@ -144,6 +203,8 @@ pub fn generate_fluid_synthesizers(settings: &TOMLRenderSettings, resources: &Pa
         }
 
         synth.build();
+        let mapping = generate_mapping(synthsettings, &mut synth);
+        synth.set_mapping(mapping);
 
         if synthsettings.soundfont.is_some() {
             for soundfont in synthsettings.soundfont.as_ref().unwrap() {

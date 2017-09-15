@@ -1,4 +1,19 @@
-pub const GM_INSTRUMENTS = vec!(
+pub fn program_nr_of(name: &str) -> u8 {
+    let index = GM_INSTRUMENTS.iter().position(|&r| r == name);
+    if index.is_some() {
+        index.unwrap() as u8
+    } else {
+        panic!("Not a valid MIDI instrument: '{}'. Use --list-instruments to get a complete list of supported names.", name);
+    }
+}
+
+pub fn list_instruments() {
+    for (id, instrument) in GM_INSTRUMENTS.iter().enumerate() {
+        println!("{}: {}", id, instrument);
+    }
+}
+
+pub const GM_INSTRUMENTS: [&'static str; 128] = [
     "Acoustic Grand Piano",
     "Bright Acoustic Piano",
     "Electric Grand Piano",
@@ -127,4 +142,4 @@ pub const GM_INSTRUMENTS = vec!(
     "Helicopter",
     "Applause",
     "Gunshot"
-);
+];

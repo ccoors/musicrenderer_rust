@@ -6,6 +6,9 @@ use fluidsynth_bindgen::*;
 #[derive(StructOpt, Debug)]
 #[structopt(name = "musicrenderer_rust", about = "A simple program to render the music for OpenRCT2-OpenMusic")]
 pub struct Options {
+    #[structopt(short = "l", long = "list-instruments", help = "Lists the names of all GM instruments")]
+    pub list_instruments: bool,
+
     #[structopt(help = "Input file")]
     pub input: String,
 
@@ -64,13 +67,14 @@ pub struct TOMLMapping {
 #[derive(Debug, Deserialize)]
 pub struct TOMLCondition {
     pub program: Option<String>,
-    pub track: Option<u32>,
+    pub channel: Option<u8>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct TOMLDestination {
     pub bank: Option<u32>,
-    pub program: Option<u32>,
+    pub program: Option<String>,
+    pub program_nr: Option<u32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -99,14 +103,14 @@ pub struct TOMLSynthSetting {
 
 #[derive(Debug)]
 pub struct FluidSynthesizerCondition {
-    pub channel: u8,
-    pub program: u8,
+    pub channel: Option<u8>,
+    pub program: Option<u8>,
 }
 
 #[derive(Debug)]
 pub struct FluidSynthesizerMapping {
     pub condition: FluidSynthesizerCondition,
-    pub destination: u8,
+    pub destinations: Vec<u8>,
 }
 
 #[derive(Debug)]

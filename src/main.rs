@@ -18,12 +18,18 @@ mod tomlparser;
 mod fluidsynthesizer;
 mod midiparser;
 mod renderer;
+mod gm_instruments;
 
 fn main() {
     env_logger::init().unwrap();
 
     let opt = types::Options::from_args();
     debug!("Options: {:?}", opt);
+
+    if opt.list_instruments {
+        gm_instruments::list_instruments();
+        return;
+    }
 
     let render_settings = tomlparser::read_input_file(&opt);
     debug!("Render settings: {:?}", render_settings);
