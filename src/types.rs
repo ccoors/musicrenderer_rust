@@ -75,6 +75,7 @@ pub struct TOMLDestination {
     pub bank: Option<u32>,
     pub program: Option<String>,
     pub program_nr: Option<u32>,
+    pub soundfont: u32,
 }
 
 #[derive(Debug, Deserialize)]

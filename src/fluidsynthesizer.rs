@@ -85,6 +85,17 @@ impl FluidSynthesizer {
         debug!("Setting bank offset");
         unsafe { fluid_synth_set_bank_offset(self.synthesizer.unwrap(), result, offset); }
     }
+
+    pub fn debug_programs(&self) {
+        for channel in 0..self.used_channels {
+            let mut sfont_id: u32 = 0;
+            let mut bank_num: u32 = 0;
+            let mut preset_num: u32 = 0;
+            unsafe { fluid_synth_get_program(self.synthesizer.unwrap(), channel as i32, &mut sfont_id as *mut u32, &mut bank_num as *mut u32, &mut preset_num as *mut u32); }
+            debug!("Channel {}: {} - {}:{}", channel, sfont_id, bank_num, preset_num);
+        }
+
+    }
 }
 
 impl Drop for FluidSynthesizer {
@@ -93,16 +104,16 @@ impl Drop for FluidSynthesizer {
             trace!("Dropping FluidSynthesizer");
 
             if let Some(sequencer) = self.sequencer {
-                trace!(" Dropping sequencer");
+                trace!(" => Dropping sequencer");
                 delete_fluid_sequencer(sequencer);
             }
 
             if let Some(synthesizer) = self.synthesizer {
-                trace!(" Dropping synthesizer");
+                trace!(" => Dropping synthesizer");
                 delete_fluid_synth(synthesizer);
             }
 
-            trace!(" Dropping settings");
+            trace!(" => Dropping settings");
             delete_fluid_settings(self.settings);
         }
     }
@@ -144,7 +155,7 @@ fn generate_single_mapping(synthsettings: &TOMLSynth, synth: &mut FluidSynthesiz
         } else {
             destination.program_nr.expect("Destination must contain program or program_nr") as u8
         };
-        // Set on synth
+        unsafe { fluid_synth_program_select(synth.synthesizer.unwrap(), synth.used_channels as i32, destination.soundfont, destination_bank, destination_program as u32); }
 
         fluid_destinations.push(synth.used_channels);
         synth.used_channels += 1;
@@ -203,9 +214,6 @@ pub fn generate_fluid_synthesizers(settings: &TOMLRenderSettings, resources: &Pa
         }
 
         synth.build();
-        let mapping = generate_mapping(synthsettings, &mut synth);
-        synth.set_mapping(mapping);
-
         if synthsettings.soundfont.is_some() {
             for soundfont in synthsettings.soundfont.as_ref().unwrap() {
                 let mut soundfont_file = resources.clone();
@@ -215,6 +223,10 @@ pub fn generate_fluid_synthesizers(settings: &TOMLRenderSettings, resources: &Pa
                 synth.load_soundfont(&soundfont_file, soundfont.offset);
             }
         }
+
+        let mapping = generate_mapping(synthsettings, &mut synth);
+        synth.set_mapping(mapping);
+        synth.debug_programs();
 
         res.push(synth);
     }
