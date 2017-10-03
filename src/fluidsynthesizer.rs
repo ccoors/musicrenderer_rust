@@ -94,7 +94,6 @@ impl FluidSynthesizer {
             unsafe { fluid_synth_get_program(self.synthesizer.unwrap(), channel as i32, &mut sfont_id as *mut u32, &mut bank_num as *mut u32, &mut preset_num as *mut u32); }
             debug!("Channel {}: {} - {}:{}", channel, sfont_id, bank_num, preset_num);
         }
-
     }
 }
 
