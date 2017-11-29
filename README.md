@@ -1,2 +1,2 @@
 # musicrenderer_rust
-This directory contains musicrenderer_rust, a program that is used to render the SMF files from LilyPond to their final form. It not yet usable because development has just begun.
+This directory contains musicrenderer_rust, a deprecated program that was intended to be used to render SMF files. It not usable and it probably never will be, as it has been replaced by another solution.
